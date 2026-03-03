@@ -390,6 +390,194 @@ clearFiltersBtn.addEventListener('click', () => {
     }
 });
 
+// Glitch Typing Effect
+function initTypingEffect() {
+    const title = document.querySelector('.hero-title');
+    if (!title) return;
+    
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+    
+    const final_text = title.getAttribute('data-text');
+    const chars = '!<>-_\\\\/[]{}—=+*^?#________';
+    let iterations = 0;
+    
+    const interval = setInterval(() => {
+        title.innerText = final_text.split('').map((char, index) => {
+            if (index < iterations) {
+                return final_text[index];
+            }
+            return chars[Math.floor(Math.random() * chars.length)];
+        }).join('');
+        
+        if (iterations >= final_text.length) {
+            clearInterval(interval);
+        }
+        
+        iterations += 1 / 3;
+    }, 30);
+}
+
+// Canvas Hero Animation
+function initHeroCanvas() {
+    const canvas = document.getElementById('hero-canvas');
+    if (!canvas) return;
+    
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+    
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let particles = [];
+    
+    const mouse = {
+        x: null,
+        y: null,
+        radius: 150
+    };
+    
+    let scrollY = 0;
+    
+    function resize() {
+        width = canvas.width = canvas.parentElement.offsetWidth;
+        height = canvas.height = canvas.parentElement.offsetHeight;
+        initParticles();
+    }
+    
+    class Particle {
+        constructor() {
+            this.x = Math.random() * width;
+            this.y = Math.random() * height;
+            this.vx = (Math.random() - 0.5) * 0.5;
+            this.vy = (Math.random() - 0.5) * 0.5;
+            this.baseRadius = Math.random() * 1.5 + 0.5;
+            this.radius = this.baseRadius;
+            this.pulseTimer = Math.random() * 800;
+        }
+        
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            
+            if (this.x < 0 || this.x > width) this.vx = -this.vx;
+            if (this.y < 0 || this.y > height) this.vy = -this.vy;
+            
+            // Mouse interaction (repel)
+            if (mouse.x != null && mouse.y != null) {
+                // Calculate Y accounting for parallax shift
+                let actualY = this.y - (scrollY * 0.2);
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - actualY;
+                let distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance < mouse.radius) {
+                    const forceDirectionX = dx / distance;
+                    const forceDirectionY = dy / distance;
+                    const force = (mouse.radius - distance) / mouse.radius;
+                    this.x -= forceDirectionX * force * 1.5;
+                    this.y -= forceDirectionY * force * 1.5;
+                }
+            }
+            
+            // Occasional pulse effect
+            this.pulseTimer--;
+            if (this.pulseTimer < 0) {
+                this.radius = this.baseRadius * 3;
+                this.pulseTimer = Math.random() * 800 + 400;
+            } else if (this.radius > this.baseRadius) {
+                this.radius -= 0.05;
+            }
+        }
+        
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y - (scrollY * 0.2), this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = \`rgba(93, 253, 157, \${this.radius > this.baseRadius ? 0.8 : 0.4})\`;
+            ctx.fill();
+        }
+    }
+    
+    function initParticles() {
+        particles = [];
+        // Calculate particle count based on screen area, max 100
+        const count = Math.min(Math.floor((width * height) / 12000), 100);
+        for (let i = 0; i < count; i++) {
+            particles.push(new Particle());
+        }
+    }
+    
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw();
+            
+            // Draw connections
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                
+                if (distance < 120) {
+                    ctx.beginPath();
+                    
+                    let opacity = 1 - (distance / 120);
+                    opacity *= 0.15; // Base opacity for lines
+                    
+                    // Make lines brighter near mouse
+                    if (mouse.x != null && mouse.y != null) {
+                        const p1y = particles[i].y - (scrollY * 0.2);
+                        const p2y = particles[j].y - (scrollY * 0.2);
+                        const mdx = mouse.x - (particles[i].x + particles[j].x)/2;
+                        const mdy = mouse.y - (p1y + p2y)/2;
+                        const mDist = Math.sqrt(mdx*mdx + mdy*mdy);
+                        if (mDist < mouse.radius) {
+                            opacity += (1 - mDist/mouse.radius) * 0.4;
+                        }
+                    }
+                    
+                    ctx.strokeStyle = \`rgba(93, 253, 157, \${opacity})\`;
+                    ctx.lineWidth = 1;
+                    ctx.moveTo(particles[i].x, particles[i].y - (scrollY * 0.2));
+                    ctx.lineTo(particles[j].x, particles[j].y - (scrollY * 0.2));
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+    
+    window.addEventListener('resize', debounce(resize, 200));
+    
+    const hero = document.querySelector('.hero');
+    if (hero) {
+        let isThrottled = false;
+        hero.addEventListener('mousemove', (e) => {
+            if (isThrottled) return;
+            isThrottled = true;
+            setTimeout(() => isThrottled = false, 16); // ~60fps throttle
+            
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+        
+        hero.addEventListener('mouseleave', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+    }
+    
+    window.addEventListener('scroll', () => {
+        scrollY = window.scrollY;
+    }, {passive: true});
+    
+    resize();
+    animate();
+}
+
 // Init
+initTypingEffect();
+initHeroCanvas();
 initSkeletons();
 updateDashboard();

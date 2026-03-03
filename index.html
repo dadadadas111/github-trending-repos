@@ -3,12 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0B111B">
-    <meta property="og:title" content="GTR — GitHub Trending Repos">
-    <meta property="og:description" content="Discover the hottest repositories trending on GitHub right now.">
-    <meta property="og:image" content="assets/cover.png">
-    
-    <title>GTR — GitHub Trending Repos</title>
+    <meta name="theme-color" content="#0B111B" media="(prefers-color-scheme: dark)">
+
+    <!-- Core Meta -->
+    <meta name="description" content="Discover today's hottest GitHub trending repositories. Real-time dashboard with filtering by language, time range, and search. Track stars, forks, and growth.">
+    <meta name="keywords" content="github trending, trending repositories, github stars, open source, developer tools, github trending repos">
+    <meta name="author" content="dadadadas111">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dadadadas111.github.io/github-trending-repos/">
+
+    <!-- Open Graph (complete) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://dadadadas111.github.io/github-trending-repos/">
+    <meta property="og:title" content="GTR — GitHub Trending Repos Dashboard">
+    <meta property="og:description" content="Discover today's hottest GitHub trending repositories. Real-time filtering by language, time range, and search.">
+    <meta property="og:image" content="https://dadadadas111.github.io/github-trending-repos/assets/cover.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="GTR - GitHub Trending Repos">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="GTR — GitHub Trending Repos Dashboard">
+    <meta name="twitter:description" content="Discover today's hottest GitHub trending repositories. Real-time filtering by language, time range, and search.">
+    <meta name="twitter:image" content="https://dadadadas111.github.io/github-trending-repos/assets/cover.png">
+
+    <title>GTR — GitHub Trending Repos Dashboard</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,6 +41,27 @@
     
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="assets/logo.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "GTR - GitHub Trending Repos",
+      "description": "Real-time dashboard for GitHub trending repositories with filtering and search.",
+      "url": "https://dadadadas111.github.io/github-trending-repos/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "author": {
+        "@type": "Person",
+        "name": "dadadadas111",
+        "url": "https://github.com/dadadadas111"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
 </head>
 <body>
     <div class="ambient-glow glow-1"></div>
@@ -36,7 +78,7 @@
                 <h1 class="site-name">GTR <span class="badge">SYS</span></h1>
             </a>
             <div class="nav-links">
-                <a href="https://github.com/dadadadas111" target="_blank" class="nav-link"><i class="ph ph-github-logo"></i> @dadadadas111</a>
+                <a href="https://github.com/dadadadas111" target="_blank" rel="noopener noreferrer" class="nav-link"><i class="ph ph-github-logo"></i> @dadadadas111</a>
             </div>
         </div>
     </header>
@@ -44,7 +86,8 @@
     <main>
         <section id="hero" class="hero">
             <div class="hero-bg">
-                <img src="assets/cover.png" alt="" onerror="this.style.opacity='0';">
+                <img src="assets/cover.png" alt="Futuristic abstract network background" onerror="this.style.opacity='0';">
+                <canvas id="hero-canvas"></canvas>
                 <div class="hero-overlay"></div>
             </div>
             <div class="hero-content">
@@ -118,7 +161,7 @@
         <div class="footer-content">
             <p class="powered-by"><i class="ph ph-cpu"></i> Powered by GitHub Trending API</p>
             <div class="footer-links">
-                <a href="https://github.com/dadadadas111/github-trending-repos" target="_blank" class="footer-link">Source Code</a>
+                <a href="https://github.com/dadadadas111/github-trending-repos" target="_blank" rel="noopener noreferrer" class="footer-link">Source Code</a>
             </div>
             <p class="credit">SYSTEM INITIALIZED BY DADADADAS111</p>
         </div>

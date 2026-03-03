@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://dadadadas111.github.io/github-trending-repos/sitemap.xml
