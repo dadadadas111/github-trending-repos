@@ -647,7 +647,7 @@ main {
     font-size: 0.95rem;
     color: var(--text-secondary);
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     flex: 1;

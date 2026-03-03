@@ -144,8 +144,9 @@ function renderCards(filteredData) {
         
         // Handle potentially missing data safely
         const name = repo.name || 'Unknown Repository';
-        const owner = repo.repository ? repo.repository.split('/')[1] : 'Unknown';
-        const repoName = repo.repository ? repo.repository.split('/')[2] : name;
+        const nameParts = name.includes('/') ? name.split('/') : [null, name];
+        const owner = nameParts[0] || (repo.repository ? new URL(repo.repository).pathname.split('/')[1] : 'Unknown');
+        const repoName = nameParts[1] || (repo.repository ? new URL(repo.repository).pathname.split('/')[2] : name);
         const desc = repo.description || 'No description provided for this repository.';
         const lang = repo.language || 'Unknown';
         const langColor = getLangColor(lang);
@@ -219,7 +220,7 @@ function renderCards(filteredData) {
             // Need to change article to a for valid HTML with internal divs
             const aCard = document.createElement('a');
             aCard.className = 'repo-card';
-            aCard.href = `https://github.com${repo.repository}`;
+            aCard.href = repo.repository;
             aCard.target = '_blank';
             aCard.rel = 'noopener noreferrer';
             aCard.innerHTML = cardInner;
