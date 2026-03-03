@@ -30,6 +30,10 @@
     --transition-medium: 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 /* Base Reset */
 * {
     margin: 0;

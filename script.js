@@ -152,7 +152,7 @@ function renderCards(filteredData) {
         const langColor = getLangColor(lang);
         const stars = formatNumber(repo.stars || 0);
         const forks = formatNumber(repo.forks || 0);
-        const increase = formatNumber(repo.increased || 0);
+        const increase = repo.increased || '0 stars';
         
         // Top 3 ranking classes
         const rankClass = index < 3 ? `rank-${index + 1}` : '';
@@ -210,7 +210,7 @@ function renderCards(filteredData) {
                     <i class="ph ph-git-fork"></i> ${forks}
                 </div>
                 <div class="meta-item meta-increase">
-                    <i class="ph ph-trend-up"></i> ${increase} ${getTimePeriodLabel()}
+                    <i class="ph ph-trend-up"></i> ${increase}
                 </div>
             </div>
         `;
