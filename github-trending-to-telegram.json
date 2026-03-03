@@ -1,0 +1,593 @@
+{
+  "name": "GitHub Trending → Redis Dedup → AI Post → Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            },
+            {
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "id": "6306520f-428f-4c8b-a15e-132ef152bd4d",
+      "name": "Run Twice Daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        1552,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://githubtrending.lessx.xyz/trending",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "since",
+              "value": "daily"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "id": "908750c3-a0c2-4ac3-8638-b94064e631a5",
+      "name": "Fetch GitHub Trending",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1776,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract repos from GitHub Trending API response\n// API returns a flat array of trending repos\nconst repos = $input.all().map(item => item.json);\n\n// If response is nested in first item (single array response)\nconst repoList = Array.isArray(repos[0]) ? repos[0] : repos;\n\nreturn repoList.map(repo => ({\n  json: {\n    repoId: repo.name || repo.full_name || '',\n    name: (repo.name || '').split('/').pop(),\n    fullName: repo.name || '',\n    description: repo.description || 'No description provided',\n    url: repo.repository || repo.url || ('https://github.com/' + repo.name),\n    stars: repo.stars || '0',\n    forks: repo.forks || '0',\n    language: repo.language || 'Unknown',\n    owner: (repo.name || '').split('/')[0] || 'Unknown',\n    increased: repo.increased || '',\n    builders: (repo.builders || []).map(b => b.profile).join(', ')\n  }\n}));"
+      },
+      "id": "aeb1c271-f361-450e-a10c-e703cd183adc",
+      "name": "Extract Repo List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "326d4150-4055-4835-9508-43fd8aa87027",
+      "name": "Loop Over Repos",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2224,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "redisValue",
+        "key": "=github-trending:{{ $json.repoId }}",
+        "options": {}
+      },
+      "id": "9191d977-bef2-4ef5-8179-8f991eb75b04",
+      "name": "Check Redis If Exists",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2448,
+        576
+      ],
+      "credentials": {
+        "redis": {
+          "id": "9Hd6srghoER3bzQ3",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json.output;\nconst { headline, post, comment, jokes } = item;\n\nconst repoId = $(\"Loop Over Repos\").first().json.repoId;\nconst repoName = $(\"Loop Over Repos\").first().json.fullName;\nconst owner = repoName.split('/')[0];\nconst repo = repoName.split('/')[1];\nconst ogImage = `https://opengraph.githubassets.com/1/${owner}/${repo}`;\n\n// Format tiêu đề: Viết hoa + thêm ký tự bao quanh để tạo điểm nhấn thị giác\nconst formattedHeadline = `${headline.toUpperCase()} \\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬`;\n\nreturn [\n  {\n    json: {\n      text: `${formattedHeadline}\\n\\n${post}`,\n      repoId: repoId,\n      repoName: repoName,\n      ogImage: ogImage,\n      comment,\n      jokes,\n    },\n  },\n];"
+      },
+      "id": "8724c54f-6f17-4b10-83b7-fa04ac001d48",
+      "name": "Format Telegram Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3248,
+        872
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "=6830819839",
+        "file": "={{ $json.ogImage }}",
+        "additionalFields": {}
+      },
+      "id": "a1b2c3d4-photo-node-0001-abcdef123456",
+      "name": "Send Repo Image",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3360,
+        872
+      ],
+      "webhookId": "120cb344-ba0e-4700-afbc-768581efb904",
+      "credentials": {
+        "telegramApi": {
+          "id": "AVj4m9kDS6oS9Axm",
+          "name": "rogo_sln_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "=6830819839",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "disable_web_page_preview": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "5ac02453-9940-4ed1-a703-14f30fddfb87",
+      "name": "Send to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3584,
+        872
+      ],
+      "webhookId": "120cb344-ba0e-4700-afbc-768581efb904",
+      "credentials": {
+        "telegramApi": {
+          "id": "AVj4m9kDS6oS9Axm",
+          "name": "rogo_sln_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=github-trending:{{ $('Format Telegram Message').item.json.repoId }}",
+        "value": "={{ JSON.stringify({ postedAt: $now.toISO(), repoName: $json.repoName }) }}",
+        "keyType": "string",
+        "expire": true,
+        "ttl": 2592000
+      },
+      "id": "9571c25d-f8e6-4432-967c-c5585eae782f",
+      "name": "Mark as Posted in Redis",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        4256,
+        872
+      ],
+      "credentials": {
+        "redis": {
+          "id": "9Hd6srghoER3bzQ3",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "829b8cba-2929-4345-b84e-d23f49b18dad",
+      "name": "Skip - Already Posted",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2960,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## ⚙️ Setup Before Using This Workflow\n\n1. **Redis**: Add your Redis credentials (Credentials → Redis)\n2. **OpenAI**: Add your OpenAI API key (Credentials → OpenAI API)\n3. **Telegram Bot**:\n   - Message @BotFather on Telegram → /newbot → get your Bot Token\n   - Add credentials in n8n: Credentials → Telegram API → paste token\n   - Set `TELEGRAM_CHAT_ID` env variable (Settings → Variables)\n   - To find your chat ID: message your bot, then visit\n     https://api.telegram.org/bot<TOKEN>/getUpdates\n4. **Schedule**: Adjust trigger times (default: 9:00 AM and 6:00 PM)\n5. **Redis TTL**: Keys expire after 30 days",
+        "height": 340,
+        "width": 560,
+        "color": 4
+      },
+      "id": "5ffed1c6-bec1-4228-b2ac-4e57ce4a3d76",
+      "name": "📋 Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## How This Works\n\n**Fetch Trending** → daily trending repos from GitHub → **Loop** through each → **Check Redis** if already posted → **If new**: AI writes a post → **Send to Telegram** for you to review → **Save to Redis** (30-day TTL) → next repo. **If seen**: skip → next repo.",
+        "width": 900,
+        "color": 7
+      },
+      "id": "67de0591-b346-497e-9ae8-c88bf302c798",
+      "name": "🔄 Flow Description",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2048,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a Tech Content Creator & Growth Hacker. Your mission is to write an engaging, human-like Facebook post about a trending GitHub repository.\n\nCore Rules:\n\nLanguage: The final content must be in Vietnamese.\n\nTone: Authentic, witty, and personal (as if a developer is sharing a cool find with friends). Strictly avoid sounding like a marketing bot.\n\nStructure & Style:\n\nHeadline: Create a bold, specific headline that captures the essence of the repo.\n\nBody: Write in paragraphs, not long lists of bullet points. Explain the \"why\" and \"how\" of the repo in a natural flow.\n\nIcons: Use icons sparingly (maximum 3-4 for the entire post). No spamming emojis.\n\nHashtags: Include 3-5 relevant and trending hashtags at the end of the post (e.g., #Javascript, #MachineLearning, #GithubTrending...).\n\nCTA: Natural call-to-action mentioning the link is in the first comment.\n\nFormat: Return the response in JSON format only with these fields:\n\nheadline: A catchy, bold title.\n\npost: The main body (150-250 words) in paragraph form + hashtags.\n\ncomment: A friendly comment with the URL.\n\njokes: A list of 2-3 short, relatable developer jokes related to the repo's tech.\n\nData Input:\n\nRepository: {{ $('Loop Over Repos').item.json.fullName }}\n\nStars: {{ $('Loop Over Repos').item.json.stars }}\n\nForks: {{ $('Loop Over Repos').item.json.forks }}\n\nDescription: {{ $('Loop Over Repos').item.json.description }}\n\nGrowth: {{ $('Loop Over Repos').item.json.increased }}\n\nURL: {{ $('Loop Over Repos').item.json.url }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2896,
+        880
+      ],
+      "id": "fd8eb3a1-d16e-4c55-b642-2c0576bf1150",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "groq/compound",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        2904,
+        1096
+      ],
+      "id": "e543e68e-1fd8-408a-83b7-b07e907d0e2c",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "bf1f4X6Y9sMFkXI0",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-redis-empty",
+              "leftValue": "={{ $json.redisValue }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0857713b-66db-49ba-96a9-e2cda3db1fdf",
+      "name": "Not Yet Posted?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2672,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "=6830819839",
+        "text": "={{ $('Format Telegram Message').item.json.comment }}",
+        "additionalFields": {
+          "disable_web_page_preview": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "20873dff-ae01-444f-a99e-133001d4c964",
+      "name": "Send to Telegram1",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3808,
+        872
+      ],
+      "webhookId": "120cb344-ba0e-4700-afbc-768581efb904",
+      "credentials": {
+        "telegramApi": {
+          "id": "AVj4m9kDS6oS9Axm",
+          "name": "rogo_sln_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "=6830819839",
+        "text": "={{ JSON.stringify($('Format Telegram Message').item.json.jokes) }}",
+        "additionalFields": {
+          "disable_web_page_preview": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "5ac91654-385e-4a65-a4a8-8b61b9f85c2d",
+      "name": "Send to Telegram2",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4032,
+        872
+      ],
+      "webhookId": "120cb344-ba0e-4700-afbc-768581efb904",
+      "credentials": {
+        "telegramApi": {
+          "id": "AVj4m9kDS6oS9Axm",
+          "name": "rogo_sln_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"headline\": \"Khi AI không chỉ để chat mà còn biết 'thấu cảm' với codebase của bạn\",\n  \"post\": \"Sáng nay lướt GitHub thấy cái repo {{fullName}} này đúng là 'cứu cánh' cho mấy anh em đang ngập trong đống legacy code. Thay vì phải ngồi mò mẫm hàng giờ để hiểu logic của người tiền nhiệm, công cụ này giúp chúng ta tự động hóa toàn bộ quy trình mapping mà không làm rối tung mọi thứ lên. Điểm mình thích nhất là cách nó xử lý dữ liệu cực kỳ mượt mà, cảm giác như nó hiểu được ý đồ của mình trước khi mình kịp gõ phím vậy. Với hơn {{stars}} stars thì rõ ràng cộng đồng đang cực kỳ quan tâm đến hướng đi này. Anh em nào đang làm về mảng này thì nên ngó qua một chút, đảm bảo không phí thời gian đâu. Chi tiết mình để ngay dưới comment cho anh em tiện vọc vạch nhé.\",\n  \"comment\": \"Link repo đây nha anh em, tranh thủ star để dành khi cần: {{url}}\",\n  \"jokes\": [\n    \"Dùng cái này xong tự nhiên thấy yêu đời, mỗi tội vẫn chưa thấy nó giúp mình yêu được ai.\",\n    \"Code chạy thì ngon rồi, chỉ sợ cài xong máy nó lại thông minh quá rồi nó tự đuổi việc mình luôn thôi.\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        3032,
+        1096
+      ],
+      "id": "3f8553ba-3863-4a43-9d90-c90f32b72897",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        1552,
+        768
+      ],
+      "id": "8d731117-194e-4a16-b526-9ad7634ba944",
+      "name": "Telegram Trigger",
+      "webhookId": "08dbcc5f-1c31-4af9-ac2c-615746f6ada7",
+      "credentials": {
+        "telegramApi": {
+          "id": "AVj4m9kDS6oS9Axm",
+          "name": "rogo_sln_bot"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Run Twice Daily": {
+      "main": [
+        [
+          {
+            "node": "Fetch GitHub Trending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch GitHub Trending": {
+      "main": [
+        [
+          {
+            "node": "Extract Repo List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Repo List": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Repos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Repos": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Check Redis If Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Redis If Exists": {
+      "main": [
+        [
+          {
+            "node": "Not Yet Posted?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Telegram Message": {
+      "main": [
+        [
+          {
+            "node": "Send Repo Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Repo Image": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Telegram": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark as Posted in Redis": {
+      "main": [
+        []
+      ]
+    },
+    "Skip - Already Posted": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Repos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Format Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not Yet Posted?": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip - Already Posted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Telegram1": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Telegram2": {
+      "main": [
+        [
+          {
+            "node": "Mark as Posted in Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch GitHub Trending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "209c60df-b281-476d-87a7-81349f16e9d8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a6e229cb4d507b99864ddc0ecd8d7527ac343f2860d379fb9619133ca077a568"
+  },
+  "id": "IpX-odvd5EbDnDyA_8dgu",
+  "tags": []
+}
