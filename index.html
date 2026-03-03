@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0B111B">
+    <meta property="og:title" content="GTR — GitHub Trending Repos">
+    <meta property="og:description" content="Discover the hottest repositories trending on GitHub right now.">
+    <meta property="og:image" content="assets/cover.png">
+    
+    <title>GTR — GitHub Trending Repos</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons (Phosphor Icons for a clean, techy look) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="assets/logo.png">
+</head>
+<body>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    
+    <header class="navbar">
+        <div class="nav-content">
+            <a href="/" class="brand">
+                <div class="logo-wrapper">
+                    <!-- Fallback if image is missing -->
+                    <img src="assets/logo.png" alt="GTR Logo" class="logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-fallback" style="display:none;"><i class="ph ph-git-branch"></i></div>
+                </div>
+                <h1 class="site-name">GTR <span class="badge">SYS</span></h1>
+            </a>
+            <div class="nav-links">
+                <a href="https://github.com/dadadadas111" target="_blank" class="nav-link"><i class="ph ph-github-logo"></i> @dadadadas111</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero" class="hero">
+            <div class="hero-bg">
+                <img src="assets/cover.png" alt="" onerror="this.style.opacity='0';">
+                <div class="hero-overlay"></div>
+            </div>
+            <div class="hero-content">
+                <div class="glitch-wrapper">
+                    <h2 class="hero-title" data-text="GITHUB TRENDING">GITHUB TRENDING</h2>
+                </div>
+                <p class="hero-subtitle">Discover the hottest repositories trending on GitHub right now.</p>
+                <div class="hero-stats">
+                    <div class="stat-pill"><i class="ph ph-pulse"></i> LIVE FEED</div>
+                    <div class="stat-pill primary"><i class="ph ph-code"></i> <span id="total-count">...</span> REPOS</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="filters" class="filters-container">
+            <div class="filters-bar">
+                <div class="time-range-selector">
+                    <button class="filter-btn active" data-time="daily">Daily</button>
+                    <button class="filter-btn" data-time="weekly">Weekly</button>
+                    <button class="filter-btn" data-time="monthly">Monthly</button>
+                </div>
+                
+                <div class="search-filter-group">
+                    <div class="custom-select">
+                        <select id="language-filter" aria-label="Filter by language">
+                            <option value="all">All Languages</option>
+                        </select>
+                        <i class="ph ph-caret-down select-icon"></i>
+                    </div>
+                    
+                    <div class="search-input-wrapper">
+                        <i class="ph ph-magnifying-glass search-icon"></i>
+                        <input type="text" id="search-input" placeholder="Search repos by name or description..." aria-label="Search repositories">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="grid-section">
+            <div id="loading-state" class="state-container">
+                <div class="skeleton-grid">
+                    <!-- Skeletons generated via JS -->
+                </div>
+            </div>
+
+            <div id="error-state" class="state-container hidden">
+                <div class="error-card">
+                    <i class="ph ph-warning-circle error-icon"></i>
+                    <h3>Data Sync Failed</h3>
+                    <p id="error-message">Unable to fetch trending repositories.</p>
+                    <button id="retry-btn" class="neon-btn"><i class="ph ph-arrows-clockwise"></i> REBOOT CONNECTION</button>
+                </div>
+            </div>
+
+            <div id="empty-state" class="state-container hidden">
+                <div class="error-card">
+                    <i class="ph ph-ghost"></i>
+                    <h3>No Data Found</h3>
+                    <p>No repositories match your current filter parameters.</p>
+                    <button id="clear-filters-btn" class="neon-btn"><i class="ph ph-x"></i> CLEAR FILTERS</button>
+                </div>
+            </div>
+
+            <div id="repo-grid" class="repo-grid hidden">
+                <!-- Cards injected via JS -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p class="powered-by"><i class="ph ph-cpu"></i> Powered by GitHub Trending API</p>
+            <div class="footer-links">
+                <a href="https://github.com/dadadadas111/github-trending-repos" target="_blank" class="footer-link">Source Code</a>
+            </div>
+            <p class="credit">SYSTEM INITIALIZED BY DADADADAS111</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
