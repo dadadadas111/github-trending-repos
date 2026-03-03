@@ -43,22 +43,31 @@ async function fetchTrendingData(since = 'daily') {
         return state.data[since];
     }
 
-    try {
-        const response = await fetch(`${API_BASE_URL}?since=${since}`);
-        
-        if (!response.ok) {
-            throw new Error(`API Error: ${response.status}`);
+    const targetUrl = `${API_BASE_URL}?since=${since}`;
+    const proxyUrls = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+        targetUrl // direct attempt as last resort
+    ];
+
+    let lastError;
+    for (const url of proxyUrls) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            const data = await response.json();
+            state.data[since] = data;
+            return data;
+        } catch (error) {
+            lastError = error;
+            console.warn(`Proxy failed (${url}):`, error.message);
         }
-        
-        const data = await response.json();
-        
-        // Cache data
-        state.data[since] = data;
-        return data;
-    } catch (error) {
-        console.error('Failed to fetch trending data:', error);
-        throw error;
     }
+
+    console.error('All fetch attempts failed:', lastError);
+    throw lastError;
 }
 
 // Extract and Populate Languages
