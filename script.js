@@ -45,8 +45,7 @@ async function fetchTrendingData(since = 'daily') {
 
     const targetUrl = `${API_BASE_URL}?since=${since}`;
     const proxyUrls = [
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${targetUrl}`,
         targetUrl // direct attempt as last resort
     ];
 
