@@ -491,7 +491,7 @@ function initHeroCanvas() {
         draw() {
             ctx.beginPath();
             ctx.arc(this.x, this.y - (scrollY * 0.2), this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = \`rgba(93, 253, 157, \${this.radius > this.baseRadius ? 0.8 : 0.4})\`;
+            ctx.fillStyle = `rgba(93, 253, 157, ${this.radius > this.baseRadius ? 0.8 : 0.4})`;
             ctx.fill();
         }
     }
@@ -536,7 +536,7 @@ function initHeroCanvas() {
                         }
                     }
                     
-                    ctx.strokeStyle = \`rgba(93, 253, 157, \${opacity})\`;
+                    ctx.strokeStyle = `rgba(93, 253, 157, ${opacity})`;
                     ctx.lineWidth = 1;
                     ctx.moveTo(particles[i].x, particles[i].y - (scrollY * 0.2));
                     ctx.lineTo(particles[j].x, particles[j].y - (scrollY * 0.2));
